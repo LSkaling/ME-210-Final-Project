@@ -1,7 +1,7 @@
 #ifndef Drive_h
 #define Drive_h
 
-#include "L298N.h"
+#include "Motor.h"
 
 class Drive {
     public:
@@ -9,12 +9,13 @@ class Drive {
         void drive(int speed, int direction);
         void rotate(int speed, int time);
         void begin_rotate(int speed);
-        void stop_rotate();
+        void stop();
+        void test();
     private:
-        L298N motor_bc;
-        L298N motor_bd;
-        L298N motor_ac;
-        L298N motor_ad;
+        Motor motor_bc;
+        Motor motor_bd;
+        Motor motor_ac;
+        Motor motor_ad;
 
     
 };

@@ -2,7 +2,7 @@
 #include "Drive.h"
 #include "L298N.h"
 
-#define BC_FWD 9
+#define BC_FWD 11
 #define BC_REV 8
 #define BD_FWD 6
 #define BD_REV 7
@@ -21,39 +21,43 @@ Drive::Drive()
 }
 
 void Drive::drive(int speed, int direction) {
-    int motor_a_power = speed * cos((direction - 45) * PI / 180);
-    int motor_d_power = speed * cos((direction - 135) * PI / 180);
-    int motor_c_power = speed * cos((direction - 225) * PI / 180);
-    int motor_b_power = speed * cos((direction - 315) * PI / 180);
+    int motor_ac_power = speed * cos((direction - 135) * PI / 180);
+    int motor_ad_power = speed * cos((direction - 225) * PI / 180);
+    int motor_bc_power = speed * cos((direction - 45) * PI / 180);
+    int motor_bd_power = speed * cos((direction - 315) * PI / 180);
+
     // Drive the motors
-    motor_ac.setSpeed(motor_a_power);
-    motor_ad.setSpeed(motor_d_power);
-    motor_bc.setSpeed(motor_b_power);
-    motor_bd.setSpeed(motor_c_power);
+    motor_ac.run(motor_ac_power);
+    motor_ad.run(motor_ad_power);
+    motor_bc.run(motor_bc_power);
+    motor_bd.run(motor_bd_power);
+}
+
+
+void Drive::begin_rotate(int speed) {
+    motor_ac.run(speed);
+    motor_ad.run(speed);
+    motor_bc.run(speed);
+    motor_bd.run(speed);
+}
+
+void Drive::stop() {
+    motor_ac.stop();
+    motor_ad.stop();
+    motor_bc.stop();
+    motor_bd.stop();
 }
 
 void Drive::rotate(int speed, int time) {
-    motor_ac.setSpeed(speed);
-    motor_ad.setSpeed(speed);
-    motor_bc.setSpeed(speed);
-    motor_bd.setSpeed(speed);
+    begin_rotate(speed);
     delay(time);
-    motor_ac.setSpeed(0);
-    motor_ad.setSpeed(0);
-    motor_bc.setSpeed(0);
-    motor_bd.setSpeed(0);
+    stop();
+
 }
 
-void Drive::begin_rotate(int speed) {
-    motor_ac.setSpeed(speed);
-    motor_ad.setSpeed(speed);
-    motor_bc.setSpeed(speed);
-    motor_bd.setSpeed(speed);
-}
-
-void Drive::stop_rotate() {
-    motor_ac.setSpeed(0);
-    motor_ad.setSpeed(0);
-    motor_bc.setSpeed(0);
-    motor_bd.setSpeed(0);
+void Drive::test() {
+    motor_ac.run(100);
+    Serial.println("Motor A Forward");
+    delay(1000);
+    motor_ac.stop();
 }

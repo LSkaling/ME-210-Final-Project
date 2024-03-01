@@ -20,8 +20,24 @@ NewPing sensorC(PIN_TRIGGER_C, PIN_ECHO_C, MAX_DISTANCE);
 NewPing sensorD(PIN_TRIGGER_D, PIN_ECHO_D, MAX_DISTANCE);
 
 enum states{
-  ROTATE, ALIGN, LOAD, FORWARD, SIDE, DIAG, PARALLEL, DUMP, CELEBRATE
+  ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, CELEBRATE, WAIT
 };
+
+String stateToString(states state) {
+  switch (state) {
+    case ROTATE: return "ROTATE";
+    case ALIGN: return "ALIGN";
+    case LOAD: return "LOAD";
+    case GAP_ALIGN: return "GAP_ALIGN";
+    case TRAVERSE: return "TRAVERSE";
+    case DUMP_ALIGN: return "DUMP_ALIGN";
+    case DUMP: return "DUMP";
+    case CELEBRATE: return "CELEBRATE";
+    case WAIT: return "WAIT";
+    default: return "UNKNOWN STATE";
+  }
+}
+
 int state;
 int side;
 int frontDistance;
@@ -43,6 +59,7 @@ void updateUltrasonic(void){
     frontDistance = sensorB.ping_cm();
     rearDistance = sensorA.ping_cm();
   }
+  Serial.println("Front: " + String(frontDistance) + " Rear: " + String(rearDistance) + " C: " + String(CDistance) + " D: " + String(DDistance));
 }
 
 void handleRotate(void){
@@ -54,7 +71,7 @@ void handleRotate(void){
 
 void handleAlign(void){
   if(rearDistance <= COLLIDE_DISTANCE_THRESHOLD && CDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    drive.stop_rotate();
+    drive.stop();
     loadTimer.reset();
     state = LOAD;
   }
@@ -63,50 +80,50 @@ void handleAlign(void){
 void handleLoad(void){
   if(loadTimer.check()){
     drive.drive(MOTOR_SPEED, 0);
-    state = FORWARD;
+    state = GAP_ALIGN;
   }
 }
 
-void handleForward(void){
+void handleGapAlign(void){
+  drive.drive(100, 200);
+  if(DDistance < 60){ //TODO: Only works on one side
+    drive.stop();
+    state = WAIT;
+  }
+}
+
+void handleTraverse(void){
+  drive.drive(100, 90);
   if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    //driveD(MOTOR_SPEED);
-    state = SIDE;
-  }
-}
-
-void handleSide(void){
-  if(DDistance <= SIDE_DISTANCE_THRESHOLD){
-    //diagFwdD(MOTOR_SPEED);
-    state = DIAG;
-  }
-}
-
-void handleDiag(void){
-  if(DDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    //driveForward(MOTOR_SPEED);
-    state = PARALLEL;
-  }
-}
-
-void handleParallel(void){
-  if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD && frontDistance != 0){
-    //stopMotors();
-    analogWrite(PIN_SERVO, 0);
+    drive.stop();
     dumpTimer.reset();
+    state = DUMP_ALIGN;
+  }
+}
+
+void handleDumpAlign(void){
+  drive.drive(100, 170);
+  if(DDistance <= COLLIDE_DISTANCE_THRESHOLD){
+    drive.stop();
     state = DUMP;
   }
 }
 
 void handleDump(void){
   if(dumpTimer.check()){
-    analogWrite(PIN_SERVO, 255);
-    analogWrite(PIN_BUZZER, 255);
+    // analogWrite(PIN_SERVO, 255);
+    // analogWrite(PIN_BUZZER, 255);
     state = CELEBRATE;
   }
 }
 
 void handleCelebrate(void){
+  Serial.println("Finished");
+}
 
+void handleWait(void){
+  delay(500);
+  state = TRAVERSE;
 }
 
 void handleStateTransitions(void){
@@ -120,23 +137,20 @@ void handleStateTransitions(void){
     case LOAD:
       handleLoad();
       break;
-    case FORWARD:
-      handleForward();
+    case GAP_ALIGN:
+      handleGapAlign();
       break;
-    case SIDE:
-      handleSide();
+    case TRAVERSE:
+      handleTraverse();
       break;
-    case DIAG:
-      handleDiag();
-      break;
-    case PARALLEL:
-      handleParallel();
+    case DUMP_ALIGN:
+      handleDumpAlign();
       break;
     case DUMP:
       handleDump();
       break;
-    case CELEBRATE:
-      handleCelebrate();
+    case WAIT:
+      handleWait();
       break;
     default: 
       Serial.println("???");
@@ -145,8 +159,7 @@ void handleStateTransitions(void){
 }
 
 void setup() {
-  // put your setup code here, to run once:
-  state = ROTATE;
+  state = GAP_ALIGN; //TODO: change to ROTATE
   initializePins();
   //rotCCW(20);
   side = digitalRead(PIN_TOGGLE);
@@ -156,12 +169,20 @@ void setup() {
   DDistance = MAX_DISTANCE;
   distReadings.reset();
   Serial.begin(9600);
+  delay(1000);
+  Serial.println("Starting");
+  // drive.test();
+  // drive.drive(30, 135);
+  // delay(5000);
+  // drive.stop();
+  Serial.println("Done");
 }
 
 void loop() {
   if(distReadings.check()){
     updateUltrasonic();
   }
+  Serial.println("State: " + stateToString(state));
   handleStateTransitions();
 }
 
