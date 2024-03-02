@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "Drive.h"
 #include "pinSetup.h"
-
+#include <Servo.h>
 #define COLLIDE_DISTANCE_THRESHOLD 2
 #define SIDE_DISTANCE_THRESHOLD 62
 #define ROTATE_DISTANCE_THRESHOLD 15
@@ -18,6 +18,7 @@ NewPing sensorA(PIN_TRIGGER_A, PIN_ECHO_A, MAX_DISTANCE);
 NewPing sensorB(PIN_TRIGGER_B, PIN_ECHO_B, MAX_DISTANCE);
 NewPing sensorC(PIN_TRIGGER_C, PIN_ECHO_C, MAX_DISTANCE);
 NewPing sensorD(PIN_TRIGGER_D, PIN_ECHO_D, MAX_DISTANCE);
+Servo dumper;
 
 enum states{
   INIT, ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT
@@ -67,6 +68,7 @@ void updateUltrasonic(void){
 }
 
 void handleInit(){
+  dumper.write(SERVO_UP);
   drive.begin_rotate(MOTOR_SPEED);
   state = ROTATE;
 }
@@ -112,6 +114,7 @@ void handleDumpAlign(void){
   if(DDistance <= COLLIDE_DISTANCE_THRESHOLD){
     drive.stop();
     dumpTimer.reset();
+    dumper.write(SERVO_DOWN);
     state = DUMP;
   }
 }
@@ -120,6 +123,7 @@ void handleDump(void){
   if(dumpTimer.check()){
     // analogWrite(PIN_SERVO, 255);
     // analogWrite(PIN_BUZZER, 255);
+    dumper.write(SERVO_UP);
     drive.drive(100, 10);
     state = REVERSE_GAP_ALIGN;
   }
@@ -209,6 +213,7 @@ void setup() {
   DDistance = MAX_DISTANCE;
   distReadings.reset();
   Serial.begin(9600);
+  dumper.attach(PIN_SERVO);
   delay(1000);
   Serial.println("Starting");
   // drive.test();
