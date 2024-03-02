@@ -3,7 +3,6 @@
 void initializePins() {
     pinMode(PIN_TOGGLE, INPUT);
     pinMode(PIN_SERVO, OUTPUT);
-    pinMode(PIN_BUZZER, OUTPUT);
     pinMode(PIN_TRIGGER_A, OUTPUT);
     pinMode(PIN_TRIGGER_B, OUTPUT);
     pinMode(PIN_TRIGGER_C, OUTPUT);

@@ -21,7 +21,7 @@ NewPing sensorD(PIN_TRIGGER_D, PIN_ECHO_D, MAX_DISTANCE);
 Servo dumper;
 
 enum states{
-  INIT, ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT
+  INIT, ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT, SHORT_TRAVERSE, CONTACT_ALIGN, CONTACT_PARALLEL, IDLE
 };
 
 String stateToString(int state) {
@@ -39,6 +39,10 @@ String stateToString(int state) {
     case REVERSE_GAP_ALIGN: return "REVERSE_GAP_ALIGN";
     case REVERSE_TRAVERSE: return "REVERSE_TRAVERSE";
     case RELOAD: return "RELOAD";
+    case SHORT_TRAVERSE: return "SHORT_TRAVERSE";
+    case CONTACT_ALIGN: return "CONTACT_ALIGN";
+    case CONTACT_PARALLEL: return "CONTACT_PARALLEL";
+    case IDLE: return "IDLE";
     default: return "UNKNOWN STATE";
   }
 }
@@ -49,6 +53,7 @@ int frontDistance;
 int rearDistance;
 int CDistance;
 int DDistance;
+int lapNum;
 
 Drive drive;
 
@@ -69,7 +74,7 @@ void updateUltrasonic(void){
 
 void handleInit(){
   dumper.write(SERVO_UP);
-  drive.begin_rotate(MOTOR_SPEED);
+  drive.begin_rotate(55);
   state = ROTATE;
 }
 
@@ -123,9 +128,10 @@ void handleDump(void){
   if(dumpTimer.check()){
     // analogWrite(PIN_SERVO, 255);
     // analogWrite(PIN_BUZZER, 255);
+    lapNum++;
     dumper.write(SERVO_UP);
     drive.drive(100, 10);
-    state = REVERSE_GAP_ALIGN;
+    state = CELEBRATE;
   }
 }
 
@@ -150,13 +156,51 @@ void handleReload(void){
 }
 
 void handleCelebrate(void){
-  Serial.println("Finished");
+  drive.drive(100, -45);
+  delay(300);
+  drive.begin_rotate(90);
+  for(int i = 0; i < 5; i++){
+    dumper.write(SERVO_DOWN);
+    delay(500);
+    dumper.write(SERVO_UP);
+    delay(500);
+  }
+  drive.stop();
+  state = IDLE;
 }
 
 void handleWait(void){
   delay(500);
-  drive.accelDrive(150, 255, 0.30, 90, 2500);
-  state = TRAVERSE;
+  drive.accelDrive(150, 255, 0.30, 85, 2500);
+  state = lapNum < 1 ? SHORT_TRAVERSE : TRAVERSE;
+}
+
+void handleShortTraverse(void){
+  drive.runAccel();
+  if(rearDistance > 85){
+    drive.drive(MOTOR_SPEED, 180);
+    state = CONTACT_ALIGN;
+  }
+}
+
+void handleContactAlign(void){
+  if(DDistance <= COLLIDE_DISTANCE_THRESHOLD){ 
+    drive.drive(MOTOR_SPEED, 100);
+    state = CONTACT_PARALLEL;
+  }
+}
+
+void handleContactParallel(void){
+  if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD){
+    drive.stop();
+    dumpTimer.reset();
+    dumper.write(SERVO_DOWN);
+    state = DUMP;
+  }
+}
+
+void handleIdle(void){
+
 }
 
 void handleStateTransitions(void){
@@ -194,7 +238,21 @@ void handleStateTransitions(void){
     case REVERSE_TRAVERSE:
       handleReverseTraverse();
       break;
-    
+    case SHORT_TRAVERSE:
+      handleShortTraverse();
+      break;
+    case CONTACT_ALIGN:
+      handleContactAlign();
+      break;
+    case CONTACT_PARALLEL:
+      handleContactParallel();
+      break;
+    case CELEBRATE:
+      handleCelebrate();
+      break;
+    case IDLE:
+      handleIdle();
+      break;
     default: 
       Serial.println("???");
       break;
@@ -202,7 +260,8 @@ void handleStateTransitions(void){
 }
 
 void setup() {
-  state = INIT; //TODO: change to ROTATE
+  state = INIT;
+  lapNum = 0;
   initializePins();
   //rotCCW(20);
   side = digitalRead(PIN_TOGGLE);

@@ -39,10 +39,11 @@ void Drive::drive(int speed, int direction) {
 }
 
 void Drive::accelDrive(int creepSpeed, int maxSpeed, double acceleration, int direction, int anticipatedTime) {
-    double motor_ac_scalar = cos((direction - 135) * PI / 180);
-    double motor_ad_scalar = cos((direction - 225) * PI / 180);
-    double motor_bc_scalar = cos((direction - 45) * PI / 180);
-    double motor_bd_scalar = cos((direction - 315) * PI / 180);
+    int angle = _isFieldA ? direction : -direction;
+    double motor_ac_scalar = cos((angle - 135) * PI / 180);
+    double motor_ad_scalar = cos((angle - 225) * PI / 180);
+    double motor_bc_scalar = cos((angle - 45) * PI / 180);
+    double motor_bd_scalar = cos((angle - 315) * PI / 180);
 
     // Drive the motors
     motor_ac.setAccel(creepSpeed * motor_ac_scalar, maxSpeed * motor_ac_scalar, acceleration * motor_ac_scalar, anticipatedTime);

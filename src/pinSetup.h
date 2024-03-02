@@ -5,7 +5,6 @@
 
 // Pin definitions
 #define PIN_SERVO 9
-#define PIN_BUZZER 0
 #define PIN_TRIGGER_D A0
 #define PIN_ECHO_D A1
 #define PIN_TRIGGER_C A2
