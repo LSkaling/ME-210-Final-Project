@@ -35,6 +35,9 @@ String stateToString(int state) {
     case DUMP: return "DUMP";
     case CELEBRATE: return "CELEBRATE";
     case WAIT: return "WAIT";
+    case REVERSE_GAP_ALIGN: return "REVERSE_GAP_ALIGN";
+    case REVERSE_TRAVERSE: return "REVERSE_TRAVERSE";
+    case RELOAD: return "RELOAD";
     default: return "UNKNOWN STATE";
   }
 }
