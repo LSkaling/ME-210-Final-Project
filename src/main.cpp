@@ -20,7 +20,7 @@ NewPing sensorC(PIN_TRIGGER_C, PIN_ECHO_C, MAX_DISTANCE);
 NewPing sensorD(PIN_TRIGGER_D, PIN_ECHO_D, MAX_DISTANCE);
 
 enum states{
-  ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, CELEBRATE, WAIT
+  ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT
 };
 
 String stateToString(states state) {
@@ -85,7 +85,7 @@ void handleLoad(void){
 }
 
 void handleGapAlign(void){
-  drive.drive(100, 200);
+  drive.drive(150, 200);
   if(DDistance < 60){ //TODO: Only works on one side
     drive.stop();
     state = WAIT;
@@ -93,7 +93,7 @@ void handleGapAlign(void){
 }
 
 void handleTraverse(void){
-  drive.drive(100, 90);
+  drive.runAccel();
   if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD){
     drive.stop();
     dumpTimer.reset();
@@ -102,7 +102,7 @@ void handleTraverse(void){
 }
 
 void handleDumpAlign(void){
-  drive.drive(100, 170);
+  drive.drive(150, 170);
   if(DDistance <= COLLIDE_DISTANCE_THRESHOLD){
     drive.stop();
     state = DUMP;
@@ -110,11 +110,33 @@ void handleDumpAlign(void){
 }
 
 void handleDump(void){
-  if(dumpTimer.check()){
+  //if(dumpTimer.check()){
     // analogWrite(PIN_SERVO, 255);
     // analogWrite(PIN_BUZZER, 255);
-    state = CELEBRATE;
+  state = REVERSE_GAP_ALIGN;
+  //}
+}
+
+void handleReverseGapAlign(void){
+  drive.drive(-150, 200);
+  if(DDistance > 60){
+    drive.stop();
+    drive.accelDrive(150, 255, 0.30, 270, 2500);
+    state = REVERSE_TRAVERSE;
   }
+}
+
+void handleReverseTraverse(void){
+  drive.runAccel();
+  if(rearDistance <= COLLIDE_DISTANCE_THRESHOLD){
+    drive.stop();
+    state = RELOAD;
+  }
+}
+
+void handleReload(void){
+  drive.drive(150, 0);
+  state = GAP_ALIGN;
 }
 
 void handleCelebrate(void){
@@ -123,6 +145,7 @@ void handleCelebrate(void){
 
 void handleWait(void){
   delay(500);
+  drive.accelDrive(150, 255, 0.30, 90, 2500);
   state = TRAVERSE;
 }
 
@@ -175,7 +198,24 @@ void setup() {
   // drive.drive(30, 135);
   // delay(5000);
   // drive.stop();
-  drive.accelDrive(30, 100, 10, 45, 5000);
+
+  // drive.accelDrive(50, 150, 0.30, 0, 1000);
+  // while(millis() < 8000){
+  //   drive.runAccel();
+  // }
+  // drive.stop();
+
+  // analogWrite(3, 255); //theory: this is always low.
+  // digitalWrite(2, LOW);
+
+
+  // drive.writeMotor(drive.motor_ad, 100);
+  // delay(1000);
+  // drive.writeMotor(drive.motor_ad, -100);
+  // delay(1000);
+  // drive.writeMotor(drive.motor_ad, 0);
+  // delay(500);
+
   Serial.println("Done");
 }
 

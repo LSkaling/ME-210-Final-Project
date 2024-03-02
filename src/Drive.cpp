@@ -33,17 +33,24 @@ void Drive::drive(int speed, int direction) {
     motor_bd.run(motor_bd_power);
 }
 
-void Drive::accelDrive(int creepSpeed, int maxSpeed, int acceleration, int direction, int anticipatedTime) {
-    int motor_ac_scalar = cos((direction - 135) * PI / 180);
-    int motor_ad_scalar = cos((direction - 225) * PI / 180);
-    int motor_bc_scalar = cos((direction - 45) * PI / 180);
-    int motor_bd_scalar = cos((direction - 315) * PI / 180);
+void Drive::accelDrive(int creepSpeed, int maxSpeed, double acceleration, int direction, int anticipatedTime) {
+    double motor_ac_scalar = cos((direction - 135) * PI / 180);
+    double motor_ad_scalar = cos((direction - 225) * PI / 180);
+    double motor_bc_scalar = cos((direction - 45) * PI / 180);
+    double motor_bd_scalar = cos((direction - 315) * PI / 180);
 
     // Drive the motors
     motor_ac.setAccel(creepSpeed * motor_ac_scalar, maxSpeed * motor_ac_scalar, acceleration * motor_ac_scalar, anticipatedTime);
     motor_ad.setAccel(creepSpeed * motor_ad_scalar, maxSpeed * motor_ad_scalar, acceleration * motor_ad_scalar, anticipatedTime);
     motor_bc.setAccel(creepSpeed * motor_bc_scalar, maxSpeed * motor_bc_scalar, acceleration * motor_bc_scalar, anticipatedTime);
     motor_bd.setAccel(creepSpeed * motor_bd_scalar, maxSpeed * motor_bd_scalar, acceleration * motor_bd_scalar, anticipatedTime);
+}
+
+void Drive::runAccel() {
+    motor_ac.runAccel();
+    motor_ad.runAccel();
+    motor_bc.runAccel();
+    motor_bd.runAccel();
 }
 
 
@@ -73,4 +80,8 @@ void Drive::test() {
     Serial.println("Motor A Forward");
     delay(1000);
     motor_ac.stop();
+}
+
+void Drive::writeMotor(Motor motor, int speed) {
+    motor.run(speed);
 }
