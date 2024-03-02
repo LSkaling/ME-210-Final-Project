@@ -17,14 +17,19 @@ Drive::Drive()
   motor_ac(AC_FWD, AC_REV), 
   motor_ad(AD_FWD, AD_REV)
 {
-    // Constructor body, if additional initialization is required
+   
+}
+
+void Drive::setSide(bool isFieldA){
+    _isFieldA = isFieldA;
 }
 
 void Drive::drive(int speed, int direction) {
-    int motor_ac_power = speed * cos((direction - 135) * PI / 180);
-    int motor_ad_power = speed * cos((direction - 225) * PI / 180);
-    int motor_bc_power = speed * cos((direction - 45) * PI / 180);
-    int motor_bd_power = speed * cos((direction - 315) * PI / 180);
+    int angle = _isFieldA ? direction : -direction;
+    int motor_ac_power = speed * cos((angle - 135) * PI / 180);
+    int motor_ad_power = speed * cos((angle - 225) * PI / 180);
+    int motor_bc_power = speed * cos((angle - 45) * PI / 180);
+    int motor_bd_power = speed * cos((angle - 315) * PI / 180);
 
     // Drive the motors
     motor_ac.run(motor_ac_power);

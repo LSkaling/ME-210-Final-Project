@@ -18,7 +18,9 @@ class Drive {
         Motor motor_ac;
         Motor motor_ad;
         void writeMotor(Motor motor, int speed);
+        void setSide(bool isFieldA);
     private:
+        bool _isFieldA;
 
 
     

@@ -9,7 +9,7 @@
 
 #include <NewPing.h>
 #include <Metro.h>
-#define MOTOR_SPEED 40
+#define MOTOR_SPEED 150
 
 static Metro loadTimer = Metro(30);
 static Metro dumpTimer = Metro(1500);
@@ -20,11 +20,12 @@ NewPing sensorC(PIN_TRIGGER_C, PIN_ECHO_C, MAX_DISTANCE);
 NewPing sensorD(PIN_TRIGGER_D, PIN_ECHO_D, MAX_DISTANCE);
 
 enum states{
-  ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT
+  INIT, ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT
 };
 
 String stateToString(states state) {
   switch (state) {
+    case INIT: return "INIT";
     case ROTATE: return "ROTATE";
     case ALIGN: return "ALIGN";
     case LOAD: return "LOAD";
@@ -62,9 +63,14 @@ void updateUltrasonic(void){
   Serial.println("Front: " + String(frontDistance) + " Rear: " + String(rearDistance) + " C: " + String(CDistance) + " D: " + String(DDistance));
 }
 
+void handleInit(){
+  drive.begin_rotate(MOTOR_SPEED);
+  state = ROTATE;
+}
+
 void handleRotate(void){
   if(rearDistance <= ROTATE_DISTANCE_THRESHOLD && CDistance <= ROTATE_DISTANCE_THRESHOLD){
-    drive.begin_rotate(MOTOR_SPEED);
+    drive.drive(MOTOR_SPEED, -45);
     state = ALIGN;
   }
 }
@@ -79,13 +85,12 @@ void handleAlign(void){
 
 void handleLoad(void){
   if(loadTimer.check()){
-    drive.drive(MOTOR_SPEED, 0);
+    drive.drive(100, 200);
     state = GAP_ALIGN;
   }
 }
 
 void handleGapAlign(void){
-  drive.drive(150, 200);
   if(DDistance < 60){ //TODO: Only works on one side
     drive.stop();
     state = WAIT;
@@ -95,32 +100,30 @@ void handleGapAlign(void){
 void handleTraverse(void){
   drive.runAccel();
   if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    drive.stop();
-    dumpTimer.reset();
+    drive.drive(100, 170);
     state = DUMP_ALIGN;
   }
 }
 
 void handleDumpAlign(void){
-  drive.drive(150, 170);
   if(DDistance <= COLLIDE_DISTANCE_THRESHOLD){
     drive.stop();
+    dumpTimer.reset();
     state = DUMP;
   }
 }
 
 void handleDump(void){
-  //if(dumpTimer.check()){
+  if(dumpTimer.check()){
     // analogWrite(PIN_SERVO, 255);
     // analogWrite(PIN_BUZZER, 255);
-  state = REVERSE_GAP_ALIGN;
-  //}
+    drive.drive(100, 10);
+    state = REVERSE_GAP_ALIGN;
+  }
 }
 
 void handleReverseGapAlign(void){
-  drive.drive(-150, 200);
   if(DDistance > 60){
-    drive.stop();
     drive.accelDrive(150, 255, 0.30, 270, 2500);
     state = REVERSE_TRAVERSE;
   }
@@ -129,8 +132,8 @@ void handleReverseGapAlign(void){
 void handleReverseTraverse(void){
   drive.runAccel();
   if(rearDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    drive.stop();
-    state = RELOAD;
+    drive.drive(100, -10);
+    state = ALIGN;
   }
 }
 
@@ -151,6 +154,9 @@ void handleWait(void){
 
 void handleStateTransitions(void){
   switch(state){
+    case INIT:
+      handleInit();
+      break;
     case ROTATE: 
       handleRotate();
       break;
@@ -175,6 +181,13 @@ void handleStateTransitions(void){
     case WAIT:
       handleWait();
       break;
+    case REVERSE_GAP_ALIGN:
+      handleReverseGapAlign();
+      break;
+    case REVERSE_TRAVERSE:
+      handleReverseTraverse();
+      break;
+    
     default: 
       Serial.println("???");
       break;
@@ -182,10 +195,11 @@ void handleStateTransitions(void){
 }
 
 void setup() {
-  state = GAP_ALIGN; //TODO: change to ROTATE
+  state = INIT; //TODO: change to ROTATE
   initializePins();
   //rotCCW(20);
   side = digitalRead(PIN_TOGGLE);
+  drive.setSide(side);
   frontDistance = MAX_DISTANCE;
   rearDistance = MAX_DISTANCE;
   CDistance = MAX_DISTANCE;
