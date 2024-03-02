@@ -23,7 +23,7 @@ enum states{
   INIT, ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT
 };
 
-String stateToString(states state) {
+String stateToString(int state) {
   switch (state) {
     case INIT: return "INIT";
     case ROTATE: return "ROTATE";
