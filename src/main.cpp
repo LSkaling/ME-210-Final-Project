@@ -131,7 +131,7 @@ void handleDump(void){
     lapNum++;
     dumper.write(SERVO_UP);
     drive.drive(100, 10);
-    state = CELEBRATE;
+    state = REVERSE_GAP_ALIGN;
   }
 }
 
