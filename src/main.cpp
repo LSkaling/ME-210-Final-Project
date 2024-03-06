@@ -130,14 +130,16 @@ void handleDump(void){
     // analogWrite(PIN_BUZZER, 255);
     lapNum++;
     dumper.write(SERVO_UP);
-    drive.drive(100, 10);
+    drive.drive(150, 20);
     state = REVERSE_GAP_ALIGN;
   }
 }
 
 void handleReverseGapAlign(void){
-  if(DDistance > 60){
-    drive.accelDrive(150, 255, 0.30, 270, 2500);
+  if(DDistance > 20){
+    drive.stop();
+    delay(500);
+    drive.accelDrive(150, 255, 0.30, 265, 2500);
     state = REVERSE_TRAVERSE;
   }
 }
