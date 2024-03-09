@@ -112,7 +112,7 @@ void handleLoad(void){
 }
 
 void handleGapAlign(void){
-  if(DDistance < 60){ //TODO: Only works on one side
+  if(DDistance < 50){ //TODO: Only works on one side
     drive.stop();
     state = WAIT;
   }
@@ -121,7 +121,7 @@ void handleGapAlign(void){
 void handleTraverse(void){
   drive.runAccel();
   if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    drive.drive(100, 170);
+    drive.drive(200, 170);
     state = DUMP_ALIGN;
   }
 }
@@ -131,12 +131,14 @@ void handleDumpAlign(void){
     drive.stop();
     dumpTimer.reset();
     dumper.write(SERVO_DOWN);
+    /*
     for(int i = 0; i < 3; i++){
       delay(600);
       dumper.write(SERVO_UP);
       delay(600);
       dumper.write(SERVO_DOWN);
     }
+    */
     state = DUMP;
   }
 }
@@ -147,7 +149,7 @@ void handleDump(void){
     // analogWrite(PIN_BUZZER, 255);
     lapNum++;
     dumper.write(SERVO_UP);
-    drive.drive(150, 20);
+    drive.drive(200, 20);
     state = REVERSE_GAP_ALIGN;
   }
 }
@@ -155,8 +157,8 @@ void handleDump(void){
 void handleReverseGapAlign(void){
   if(DDistance > 20){
     drive.stop();
-    delay(500);
-    drive.accelDrive(200, 255, 0.30, 275, 2500);
+    delay(200);
+    drive.accelDrive(100, 255, 0.15, 270, 2500);
     state = REVERSE_TRAVERSE;
   }
 }
@@ -164,7 +166,7 @@ void handleReverseGapAlign(void){
 void handleReverseTraverse(void){
   drive.runAccel();
   if(rearDistance <= COLLIDE_DISTANCE_THRESHOLD + 2){
-    drive.drive(150, -25);
+    drive.drive(200, -25);
     state = ALIGN;
   }
 }
@@ -186,8 +188,8 @@ void handleCelebrate(void){
 }
 
 void handleWait(void){
-  delay(500);
-  drive.accelDrive(200, 255, 0.30, 85, 2500);
+  delay(200);
+  drive.accelDrive(100, 255, 0.15, 88, 2500);
   state = lapNum < 1 ? SHORT_TRAVERSE : TRAVERSE;
 }
 
@@ -211,12 +213,14 @@ void handleContactParallel(void){
     drive.stop();
     dumpTimer.reset();
     dumper.write(SERVO_DOWN);
+    /*
     for(int i = 0; i < 3; i++){
       delay(600);
       dumper.write(SERVO_UP);
       delay(600);
       dumper.write(SERVO_DOWN);
     }
+    */
     state = DUMP;
   }
 }
