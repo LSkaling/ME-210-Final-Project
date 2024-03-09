@@ -10,10 +10,10 @@
 #include <NewPing.h>
 #include <Metro.h>
 #define MOTOR_SPEED 150
-
-static Metro loadTimer = Metro(30);
+static Metro loadTimer = Metro(500);
 static Metro dumpTimer = Metro(1500);
 static Metro distReadings = Metro (10); // interval between distance readings
+static Metro secondCounter = Metro(1000); //game time. Should go for 2:05, then stop
 NewPing sensorA(PIN_TRIGGER_A, PIN_ECHO_A, MAX_DISTANCE);
 NewPing sensorB(PIN_TRIGGER_B, PIN_ECHO_B, MAX_DISTANCE);
 NewPing sensorC(PIN_TRIGGER_C, PIN_ECHO_C, MAX_DISTANCE);
@@ -22,6 +22,9 @@ Servo dumper;
 
 enum states{
   INIT, ROTATE, ALIGN, LOAD, GAP_ALIGN, TRAVERSE, DUMP_ALIGN, DUMP, REVERSE_GAP_ALIGN, REVERSE_TRAVERSE, RELOAD, CELEBRATE, WAIT, SHORT_TRAVERSE, CONTACT_ALIGN, CONTACT_PARALLEL, IDLE
+};
+enum playStates{
+  START, ACTIVE, RESET, DONE
 };
 
 String stateToString(int state) {
@@ -48,26 +51,34 @@ String stateToString(int state) {
 }
 
 int state;
+int playState;
 int side;
 int frontDistance;
 int rearDistance;
 int CDistance;
 int DDistance;
 int lapNum;
+int gameTimer;
 
 Drive drive;
 
 void updateUltrasonic(void){
   distReadings.reset();
-  CDistance = sensorC.ping_cm();
-  DDistance = sensorD.ping_cm();
+  int CDist = sensorC.ping_cm();
+  int DDist = sensorD.ping_cm();
+  CDistance = CDist; //? CDist : CDistance;
+  DDistance = DDist; //? DDist : DDistance;
   if(side){
-    frontDistance = sensorA.ping_cm();
-    rearDistance = sensorB.ping_cm();
+    int fDist = sensorA.ping_cm();
+    int rDist = sensorB.ping_cm();
+    frontDistance = fDist; //? fDist : frontDistance; // only updates if reading is nonzero
+    rearDistance = rDist; //? rDist : rearDistance; //only updates if reading is nonzero
   }
   else{
-    frontDistance = sensorB.ping_cm();
-    rearDistance = sensorA.ping_cm();
+    int fDist = sensorB.ping_cm();
+    int rDist = sensorA.ping_cm();
+    frontDistance = fDist; //? fDist : frontDistance; // only updates if reading is nonzero
+    rearDistance = rDist; //? rDist : rearDistance; //only updates if reading is nonzero
   }
   Serial.println("Front: " + String(frontDistance) + " Rear: " + String(rearDistance) + " C: " + String(CDistance) + " D: " + String(DDistance));
 }
@@ -120,6 +131,12 @@ void handleDumpAlign(void){
     drive.stop();
     dumpTimer.reset();
     dumper.write(SERVO_DOWN);
+    for(int i = 0; i < 3; i++){
+      delay(600);
+      dumper.write(SERVO_UP);
+      delay(600);
+      dumper.write(SERVO_DOWN);
+    }
     state = DUMP;
   }
 }
@@ -139,15 +156,15 @@ void handleReverseGapAlign(void){
   if(DDistance > 20){
     drive.stop();
     delay(500);
-    drive.accelDrive(150, 255, 0.30, 265, 2500);
+    drive.accelDrive(200, 255, 0.30, 275, 2500);
     state = REVERSE_TRAVERSE;
   }
 }
 
 void handleReverseTraverse(void){
   drive.runAccel();
-  if(rearDistance <= COLLIDE_DISTANCE_THRESHOLD){
-    drive.drive(100, -10);
+  if(rearDistance <= COLLIDE_DISTANCE_THRESHOLD + 2){
+    drive.drive(150, -25);
     state = ALIGN;
   }
 }
@@ -158,22 +175,19 @@ void handleReload(void){
 }
 
 void handleCelebrate(void){
-  drive.drive(100, -45);
-  delay(300);
-  drive.begin_rotate(90);
-  for(int i = 0; i < 5; i++){
-    dumper.write(SERVO_DOWN);
-    delay(500);
-    dumper.write(SERVO_UP);
-    delay(500);
-  }
   drive.stop();
+  for(int i = 0; i < 10; i++){
+    dumper.write(SERVO_DOWN);
+    delay(400);
+    dumper.write(SERVO_UP);
+    delay(400);
+  }
   state = IDLE;
 }
 
 void handleWait(void){
   delay(500);
-  drive.accelDrive(150, 255, 0.30, 85, 2500);
+  drive.accelDrive(200, 255, 0.30, 85, 2500);
   state = lapNum < 1 ? SHORT_TRAVERSE : TRAVERSE;
 }
 
@@ -197,11 +211,52 @@ void handleContactParallel(void){
     drive.stop();
     dumpTimer.reset();
     dumper.write(SERVO_DOWN);
+    for(int i = 0; i < 3; i++){
+      delay(600);
+      dumper.write(SERVO_UP);
+      delay(600);
+      dumper.write(SERVO_DOWN);
+    }
     state = DUMP;
   }
 }
 
 void handleIdle(void){
+  
+}
+
+void handleStart(void){
+  playState = ACTIVE;
+}
+
+void handleActive(void){
+  if(digitalRead(PIN_TOGGLE) != side){
+    drive.stop();
+    dumper.write(SERVO_UP);
+    playState = RESET;
+    state = IDLE;
+  }
+  if(gameTimer == 125){
+    drive.stop();
+    state = CELEBRATE;
+    playState = DONE;
+  }
+}
+
+void handleReset(void){
+  if(digitalRead(PIN_TOGGLE) == side){
+    drive.drive(MOTOR_SPEED, -45);
+    state = ALIGN;
+    playState = ACTIVE;
+  }
+  if(gameTimer == 125){
+    drive.stop();
+    state = CELEBRATE;
+    playState = DONE;
+  }
+}
+
+void handleDone(void){
 
 }
 
@@ -259,10 +314,28 @@ void handleStateTransitions(void){
       Serial.println("???");
       break;
   }
+  switch(playState){
+    case START:
+      handleStart();
+      break;
+    case ACTIVE:
+      handleActive();
+      break;
+    case RESET:
+      handleReset();
+      break;
+    case DONE:
+      handleDone();
+      break;
+    default:
+      Serial.println("???");
+      break;
+  }
 }
 
 void setup() {
   state = INIT;
+  playState = START;
   lapNum = 0;
   initializePins();
   //rotCCW(20);
@@ -276,6 +349,8 @@ void setup() {
   Serial.begin(9600);
   dumper.attach(PIN_SERVO);
   delay(1000);
+  gameTimer = 0;
+  secondCounter.reset();
   Serial.println("Starting");
   // drive.test();
   // drive.drive(30, 135);
@@ -305,6 +380,10 @@ void setup() {
 void loop() {
   if(distReadings.check()){
     updateUltrasonic();
+  }
+  if(secondCounter.check()){
+    secondCounter.reset();
+    gameTimer++;
   }
   Serial.println("State: " + stateToString(state));
   handleStateTransitions();
