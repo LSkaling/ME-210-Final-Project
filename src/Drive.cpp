@@ -38,7 +38,7 @@ void Drive::drive(int speed, int direction) {
     motor_bd.run(motor_bd_power);
 }
 
-void Drive::accelDrive(int creepSpeed, int maxSpeed, double acceleration, int direction, int anticipatedTime) {
+void Drive::accelDrive(int creepSpeed, int maxSpeed, double acceleration, int direction, int anticipatedTime, int decelPower) {
     int angle = _isFieldA ? direction : -direction;
     double motor_ac_scalar = cos((angle - 135) * PI / 180);
     double motor_ad_scalar = cos((angle - 225) * PI / 180);
@@ -46,10 +46,10 @@ void Drive::accelDrive(int creepSpeed, int maxSpeed, double acceleration, int di
     double motor_bd_scalar = cos((angle - 315) * PI / 180);
 
     // Drive the motors
-    motor_ac.setAccel(creepSpeed * motor_ac_scalar, maxSpeed * motor_ac_scalar, acceleration * motor_ac_scalar, anticipatedTime);
-    motor_ad.setAccel(creepSpeed * motor_ad_scalar, maxSpeed * motor_ad_scalar, acceleration * motor_ad_scalar, anticipatedTime);
-    motor_bc.setAccel(creepSpeed * motor_bc_scalar, maxSpeed * motor_bc_scalar, acceleration * motor_bc_scalar, anticipatedTime);
-    motor_bd.setAccel(creepSpeed * motor_bd_scalar, maxSpeed * motor_bd_scalar, acceleration * motor_bd_scalar, anticipatedTime);
+    motor_ac.setAccel(creepSpeed * motor_ac_scalar, maxSpeed * motor_ac_scalar, acceleration * motor_ac_scalar, anticipatedTime, decelPower * motor_ac_scalar);
+    motor_ad.setAccel(creepSpeed * motor_ad_scalar, maxSpeed * motor_ad_scalar, acceleration * motor_ad_scalar, anticipatedTime, decelPower * motor_ad_scalar);
+    motor_bc.setAccel(creepSpeed * motor_bc_scalar, maxSpeed * motor_bc_scalar, acceleration * motor_bc_scalar, anticipatedTime, decelPower * motor_bc_scalar);
+    motor_bd.setAccel(creepSpeed * motor_bd_scalar, maxSpeed * motor_bd_scalar, acceleration * motor_bd_scalar, anticipatedTime, decelPower * motor_bd_scalar);
 }
 
 void Drive::runAccel() {

@@ -24,12 +24,13 @@ void Motor::run(int power) {
     }
 }
 
-void Motor::setAccel(int creepPower, int maxPower, double acceleration, double anticipatedTime){ //Accelerate at acceleration rate until halfway, then decelerate at acceleration rate
+void Motor::setAccel(int creepPower, int maxPower, double acceleration, double anticipatedTime, int decelPower){ //Accelerate at acceleration rate until halfway, then decelerate at acceleration rate
     //starting conditions
     _creepPower = creepPower;
     _maxPower = maxPower;
     _acceleration = acceleration;
     _anticipatedTime = anticipatedTime;
+    _decelPower = decelPower;
     motorStartTime = millis();
 }
 
@@ -49,9 +50,9 @@ void Motor::runAccel(){ //Note: does not stop the motor after, keeps it creeping
     else if(motorTime < _anticipatedTime){
         int power = _maxPower - (motorTime - _anticipatedTime/2) * _acceleration;
         if(_maxPower > 0){
-            power = power < _creepPower ? _creepPower : power;
+            power = power < _decelPower ? _decelPower : power;
         }else{
-            power = power > _creepPower ? _creepPower : power;
+            power = power > _decelPower ? _decelPower : power;
         }
         Serial.print(power); Serial.print(" "); Serial.println(motorTime);
         run(power);

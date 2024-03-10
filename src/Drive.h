@@ -7,7 +7,7 @@ class Drive {
     public:
         Drive();
         void drive(int speed, int direction);
-        void accelDrive(int creepSpeed, int maxSpeed, double acceleration, int direction, int anticipatedTime);
+        void accelDrive(int creepSpeed, int maxSpeed, double acceleration, int direction, int anticipatedTime, int decelPower);
         void runAccel();
         void rotate(int speed, int time);
         void begin_rotate(int speed);

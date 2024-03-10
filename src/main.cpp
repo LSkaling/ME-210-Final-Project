@@ -66,19 +66,19 @@ void updateUltrasonic(void){
   distReadings.reset();
   int CDist = sensorC.ping_cm();
   int DDist = sensorD.ping_cm();
-  CDistance = CDist; //? CDist : CDistance;
-  DDistance = DDist; //? DDist : DDistance;
+  CDistance = CDist;// ? CDist : CDistance;
+  DDistance = DDist;// ? DDist : DDistance;
   if(side){
     int fDist = sensorA.ping_cm();
     int rDist = sensorB.ping_cm();
-    frontDistance = fDist; //? fDist : frontDistance; // only updates if reading is nonzero
-    rearDistance = rDist; //? rDist : rearDistance; //only updates if reading is nonzero
+    frontDistance = fDist;// ? fDist : frontDistance; // only updates if reading is nonzero
+    rearDistance = rDist;// ? rDist : rearDistance; //only updates if reading is nonzero
   }
   else{
     int fDist = sensorB.ping_cm();
     int rDist = sensorA.ping_cm();
-    frontDistance = fDist; //? fDist : frontDistance; // only updates if reading is nonzero
-    rearDistance = rDist; //? rDist : rearDistance; //only updates if reading is nonzero
+    frontDistance = fDist;// ? fDist : frontDistance; // only updates if reading is nonzero
+    rearDistance = rDist;// ? rDist : rearDistance; //only updates if reading is nonzero
   }
   Serial.println("Front: " + String(frontDistance) + " Rear: " + String(rearDistance) + " C: " + String(CDistance) + " D: " + String(DDistance));
 }
@@ -158,7 +158,7 @@ void handleReverseGapAlign(void){
   if(DDistance > 20){
     drive.stop();
     delay(200);
-    drive.accelDrive(100, 255, 0.15, 275, 2500);
+    drive.accelDrive(150, 255, 0.15, 275, 2500, 175);
     state = REVERSE_TRAVERSE;
   }
 }
@@ -189,7 +189,7 @@ void handleCelebrate(void){
 
 void handleWait(void){
   delay(200);
-  drive.accelDrive(100, 255, 0.15, 85, 2500);
+  drive.accelDrive(150, 255, 0.15, 85, 2500, 175);
   state = lapNum < 1 ? SHORT_TRAVERSE : TRAVERSE;
 }
 
