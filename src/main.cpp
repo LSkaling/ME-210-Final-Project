@@ -209,7 +209,7 @@ void handleContactAlign(void){
 }
 
 void handleContactParallel(void){
-  if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD){
+  if(frontDistance <= COLLIDE_DISTANCE_THRESHOLD && frontDistance != 0){
     drive.stop();
     dumpTimer.reset();
     dumper.write(SERVO_DOWN);
@@ -248,6 +248,7 @@ void handleActive(void){
 }
 
 void handleReset(void){
+  drive.stop();
   if(digitalRead(PIN_TOGGLE) == side){
     drive.drive(MOTOR_SPEED, -45);
     state = ALIGN;
