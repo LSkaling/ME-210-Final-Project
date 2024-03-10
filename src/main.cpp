@@ -158,7 +158,7 @@ void handleReverseGapAlign(void){
   if(DDistance > 20){
     drive.stop();
     delay(200);
-    drive.accelDrive(100, 255, 0.15, 270, 2500);
+    drive.accelDrive(100, 255, 0.15, 275, 2500);
     state = REVERSE_TRAVERSE;
   }
 }
@@ -189,7 +189,7 @@ void handleCelebrate(void){
 
 void handleWait(void){
   delay(200);
-  drive.accelDrive(100, 255, 0.15, 88, 2500);
+  drive.accelDrive(100, 255, 0.15, 85, 2500);
   state = lapNum < 1 ? SHORT_TRAVERSE : TRAVERSE;
 }
 
@@ -352,7 +352,6 @@ void setup() {
   distReadings.reset();
   Serial.begin(9600);
   dumper.attach(PIN_SERVO);
-  delay(1000);
   gameTimer = 0;
   secondCounter.reset();
   Serial.println("Starting");
